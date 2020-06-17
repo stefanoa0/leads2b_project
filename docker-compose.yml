@@ -1,0 +1,45 @@
+version: '2.1'
+services:
+  app:
+    build: ./leads2b_back/ .
+    command: sh -c 'npm run migrate && npm start'
+    ports:
+      - "3000:3000"
+    volumes:
+      - './usr/app/'
+      - './usr/app/node_modules'
+    depends_on:
+        postgres:
+            condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGDATABASE: leads2b
+      PGUSER: postgres
+      PGPASSWORD: 'Postgres!'
+      
+  postgres:
+    image: postgres:9.6.2-alpine
+    ports:
+      - "5433:5433" # I need to change this because of my local postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: leads2b
+      POSTGRES_PASSWORD: "Postgres!"
+    volumes:
+        - ./backups:/home/backups
+    command:
+      -p 5433
+    healthcheck:
+      test: "exit 0"
+
+  web:
+    build: ./leads2b_front/web/ .
+    command: npm run serve
+    volumes:
+      - './usr/web/'
+      - './usr/web/node_modules'
+    ports:
+      - "8080:8080"
+    depends_on: 
+      - "app"
+
